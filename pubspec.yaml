@@ -1,0 +1,24 @@
+name: serial_number_ocr
+description: A Flutter package for performing OCR operations and extracting serial numbers from images/pdf.
+version: 0.1.0
+homepage: https://github.com/swapnilkondekar/serial_number_ocr
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_mlkit_text_recognition: ^0.11.0
+  image_picker: ^1.1.2
+  path_provider: ^2.1.2
+  pdf_render: ^1.4.12
+  ffi: ^2.1.0
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
