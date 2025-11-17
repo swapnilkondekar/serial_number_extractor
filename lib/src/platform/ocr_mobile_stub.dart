@@ -11,3 +11,5 @@ OCRPlatformInterface createMobileOCRImpl() {
 
 
 
+
+

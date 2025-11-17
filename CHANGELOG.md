@@ -14,11 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Desktop (Windows/macOS/Linux): Uses Tesseract OCR (placeholder implementation)
 - **Platform factory**: Automatic platform detection and OCR engine selection
 - **Desktop OCR interface**: Foundation for desktop OCR support (Tesseract integration planned)
+- **Windows PDF support**: Added Windows PDF processing using `pdfx` package
+  - Windows now uses `pdfx` for PDF rendering (supports Windows via PDFium)
+  - macOS, Linux, and iOS continue to use `pdf_render` package
+  - Automatic platform detection and appropriate PDF library selection
 
 ### Changed
 - Refactored OCR service to use platform abstraction layer
 - Updated documentation to reflect cross-platform support
 - Improved code organization with platform-specific modules
+- PDF rendering now uses platform-specific implementations:
+  - Windows: `pdfx` package
+  - macOS/Linux/iOS: `pdf_render` package
+  - Android: PDF support disabled (compatibility issues)
 
 ### Known Limitations
 - Desktop OCR currently returns placeholder/empty results (Tesseract FFI integration pending)

@@ -57,3 +57,24 @@ If the issue persists, consider using alternative PDF rendering packages:
 
 Note: Using alternative packages may require code changes in the OCR service implementation.
 
+## Windows PDF Support
+
+### Issue
+On Windows, you may encounter the following error when trying to process PDF files:
+
+```
+MissingPluginException(No implementation found for method file on channel pdf_render)
+```
+
+This occurs because the `pdf_render` package does not support Windows.
+
+### Solution
+As of version 0.2.0, Windows PDF support has been implemented using the `pdfx` package, which provides native Windows support through PDFium. The package automatically detects Windows and uses `pdfx` instead of `pdf_render` for PDF processing.
+
+**No action required** - Windows PDF support is now enabled by default. Simply ensure you have the latest version of the package installed.
+
+### Technical Details
+- Windows uses `pdfx` package (supports Windows, macOS, Linux, web)
+- macOS, Linux, and iOS continue to use `pdf_render` package
+- Android PDF support remains unavailable due to compatibility issues
+

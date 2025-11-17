@@ -5,11 +5,13 @@ import '../platform/ocr_platform_interface.dart';
 import '../serial_number_extractor.dart';
 import 'pdf_render_impl.dart'
     if (dart.library.html) 'pdf_render_stub.dart';
+import 'pdf_render_windows.dart';
 
 /// Platform-specific PDF rendering
 /// 
 /// On Android, pdf_render has compatibility issues, so we use a stub
-/// On other platforms, we use the actual implementation
+/// On Windows, we use pdfx which supports Windows
+/// On other platforms (macOS, Linux, iOS), we use pdf_render
 Future<SerialNumberResult> extractSerialNumberFromPdfPlatform(
   String pdfPath,
   OCRPlatformInterface ocrEngine,
@@ -31,7 +33,17 @@ Future<SerialNumberResult> extractSerialNumberFromPdfPlatform(
     );
   }
 
-  // Use the actual implementation on other platforms
+  // On Windows, use pdfx which supports Windows
+  if (Platform.isWindows) {
+    return extractSerialNumberFromPdfWindows(
+      pdfPath,
+      ocrEngine,
+      extractor,
+      pageIndex: pageIndex,
+    );
+  }
+
+  // Use pdf_render on other platforms (macOS, Linux, iOS)
   return extractSerialNumberFromPdfImpl(
     pdfPath,
     ocrEngine,
