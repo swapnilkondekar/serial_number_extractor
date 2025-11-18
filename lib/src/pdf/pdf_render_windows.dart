@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,11 +17,13 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
 }) async {
   PdfDocument? document;
   try {
+    debugPrint('Opening PDF file with pdfx: $pdfPath');
     document = await PdfDocument.openFile(pdfPath);
     final pageCount = document.pagesCount;
+    debugPrint('PDF opened successfully. Page count: $pageCount');
     
     if (pageCount == 0) {
-      await document.dispose();
+      await document.close();
       return SerialNumberResult(
         serialNumber: null,
         allSerialNumbers: [],
@@ -45,32 +46,26 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
     for (final pageNum in pagesToProcess) {
       if (pageNum >= pageCount) continue;
 
-      PdfController? pageController;
+      PdfPage? page;
       try {
-        // Create a controller for this specific page
-        pageController = PdfController(
-          document: document,
-          initialPage: pageNum + 1,
-        );
+        // Get the page from the document (page numbers start from 1)
+        page = await document.getPage(pageNum + 1);
         
         // Render page to image
         final tempDir = await getTemporaryDirectory();
         final imagePath = '${tempDir.path}/pdf_page_${pageNum}_${DateTime.now().millisecondsSinceEpoch}.png';
         
         // Render the page to an image with pdfx
-        // pdfx's PdfController.render() returns a ui.Image directly
-        final pageImage = await pageController.render(
+        // pdfx's render() returns PdfPageImage with bytes directly
+        final pageImage = await page.render(
           width: 2048,
           height: 2048,
+          format: PdfPageImageFormat.png,
         );
         
         if (pageImage != null) {
-          // Convert Image to PNG bytes
-          final ByteData? byteData = await pageImage.toByteData(format: ui.ImageByteFormat.png);
-          if (byteData != null) {
-            final bytes = byteData.buffer.asUint8List();
-            await File(imagePath).writeAsBytes(bytes);
-          }
+          // PdfPageImage.bytes contains the image data directly
+          await File(imagePath).writeAsBytes(pageImage.bytes);
         }
 
         // Process the rendered image with OCR
@@ -84,9 +79,6 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
         } catch (_) {
           // Ignore cleanup errors
         }
-        
-        // Dispose page controller
-        await pageController.dispose();
 
         // Combine results
         combinedRawText = '$combinedRawText${ocrResult.text}\n\n';
@@ -101,17 +93,11 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
         }
       } catch (e) {
         debugPrint('Error processing PDF page ${pageNum + 1}: $e');
-        // Dispose controller if it was created
-        try {
-          await pageController?.dispose();
-        } catch (_) {
-          // Ignore disposal errors
-        }
         // Continue with next page
       }
     }
 
-    await document.dispose();
+    await document.close();
 
     // Extract all serial numbers from combined text to ensure we catch any cross-page patterns
     final allSerialNumbersFromCombined = extractor.extractAllSerialNumbers(combinedRawText);
@@ -127,14 +113,13 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
       success: allSerialNumbers.isNotEmpty,
       rawText: combinedRawText.trim(),
     );
-  } catch (e) {
-    debugPrint('Error during PDF OCR: $e');
-    return SerialNumberResult(
-      serialNumber: null,
-      allSerialNumbers: [],
-      allTextBlocks: [],
-      success: false,
-      rawText: '',
+  } catch (e, stackTrace) {
+    debugPrint('Error during PDF OCR on Windows: $e');
+    debugPrint('Stack trace: $stackTrace');
+    // Re-throw with a more descriptive error message
+    throw Exception(
+      'Failed to process PDF on Windows using pdfx package. Error: $e. '
+      'Please ensure pdfx package is properly installed (run flutter pub get).',
     );
   }
 }

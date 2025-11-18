@@ -35,12 +35,22 @@ Future<SerialNumberResult> extractSerialNumberFromPdfPlatform(
 
   // On Windows, use pdfx which supports Windows
   if (Platform.isWindows) {
-    return extractSerialNumberFromPdfWindows(
-      pdfPath,
-      ocrEngine,
-      extractor,
-      pageIndex: pageIndex,
-    );
+    debugPrint('Windows detected - using pdfx for PDF processing');
+    try {
+      return await extractSerialNumberFromPdfWindows(
+        pdfPath,
+        ocrEngine,
+        extractor,
+        pageIndex: pageIndex,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Windows PDF processing failed: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Re-throw to let the caller handle it, or return empty result
+      throw Exception(
+        'Windows PDF processing failed. Please ensure pdfx package is installed (run flutter pub get). Error: $e',
+      );
+    }
   }
 
   // Use pdf_render on other platforms (macOS, Linux, iOS)
