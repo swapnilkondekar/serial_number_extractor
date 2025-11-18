@@ -38,7 +38,7 @@ Future<SerialNumberResult> extractSerialNumberFromPdfImpl(
     String combinedRawText = '';
     List<String> combinedTextBlocks = [];
     String? foundSerialNumber;
-    final Set<String> allSerialNumbersSet = <String>{};
+    final List<String> allSerialNumbersList = <String>[];
 
     // Process each page
     for (final pageNum in pagesToProcess) {
@@ -85,8 +85,8 @@ Future<SerialNumberResult> extractSerialNumberFromPdfImpl(
         combinedRawText = '$combinedRawText${ocrResult.text}\n\n';
         combinedTextBlocks.addAll(ocrResult.textBlocks);
         
-        // Collect all serial numbers from this page
-        allSerialNumbersSet.addAll(allSerialNumbers);
+        // Collect all serial numbers from this page (including duplicates)
+        allSerialNumbersList.addAll(allSerialNumbers);
         
         // Use first found serial number
         if (foundSerialNumber == null && serialNumber != null) {
@@ -102,10 +102,10 @@ Future<SerialNumberResult> extractSerialNumberFromPdfImpl(
 
     // Extract all serial numbers from combined text to ensure we catch any cross-page patterns
     final allSerialNumbersFromCombined = extractor.extractAllSerialNumbers(combinedRawText);
-    allSerialNumbersSet.addAll(allSerialNumbersFromCombined);
+    allSerialNumbersList.addAll(allSerialNumbersFromCombined);
 
-    // Convert to sorted list for consistent output
-    final allSerialNumbers = allSerialNumbersSet.toList()..sort();
+    // Sort for consistent output (duplicates preserved)
+    final allSerialNumbers = allSerialNumbersList..sort();
 
     return SerialNumberResult(
       serialNumber: foundSerialNumber ?? (allSerialNumbers.isNotEmpty ? allSerialNumbers.first : null),

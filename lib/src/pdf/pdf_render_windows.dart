@@ -40,7 +40,7 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
     String combinedRawText = '';
     List<String> combinedTextBlocks = [];
     String? foundSerialNumber;
-    final Set<String> allSerialNumbersSet = <String>{};
+    final List<String> allSerialNumbersList = <String>[];
 
     // Process each page
     for (final pageNum in pagesToProcess) {
@@ -57,10 +57,12 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
         
         // Render the page to an image with pdfx
         // pdfx's render() returns PdfPageImage with bytes directly
+        // Use higher resolution for better OCR accuracy (especially for distinguishing S vs 5)
         final pageImage = await page.render(
-          width: 2048,
-          height: 2048,
+          width: 3000, // Increased from 2048 for better character recognition
+          height: 3000, // Increased from 2048 for better character recognition
           format: PdfPageImageFormat.png,
+          quality: 100, // Maximum quality
         );
         
         if (pageImage != null) {
@@ -84,8 +86,8 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
         combinedRawText = '$combinedRawText${ocrResult.text}\n\n';
         combinedTextBlocks.addAll(ocrResult.textBlocks);
         
-        // Collect all serial numbers from this page
-        allSerialNumbersSet.addAll(allSerialNumbers);
+        // Collect all serial numbers from this page (including duplicates)
+        allSerialNumbersList.addAll(allSerialNumbers);
         
         // Use first found serial number
         if (foundSerialNumber == null && serialNumber != null) {
@@ -101,10 +103,10 @@ Future<SerialNumberResult> extractSerialNumberFromPdfWindows(
 
     // Extract all serial numbers from combined text to ensure we catch any cross-page patterns
     final allSerialNumbersFromCombined = extractor.extractAllSerialNumbers(combinedRawText);
-    allSerialNumbersSet.addAll(allSerialNumbersFromCombined);
+    allSerialNumbersList.addAll(allSerialNumbersFromCombined);
 
-    // Convert to sorted list for consistent output
-    final allSerialNumbers = allSerialNumbersSet.toList()..sort();
+    // Sort for consistent output (duplicates preserved)
+    final allSerialNumbers = allSerialNumbersList..sort();
 
     return SerialNumberResult(
       serialNumber: foundSerialNumber ?? (allSerialNumbers.isNotEmpty ? allSerialNumbers.first : null),

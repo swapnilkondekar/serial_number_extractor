@@ -57,11 +57,11 @@ class SerialNumberExtractor {
   /// Extracts all potential serial numbers from OCR text
   /// 
   /// [ocrText] - The text extracted from OCR
-  /// Returns a list of all matching serial numbers
+  /// Returns a list of all matching serial numbers (including duplicates)
   List<String> extractAllSerialNumbers(String ocrText) {
     if (ocrText.isEmpty) return [];
 
-    final Set<String> serialNumbers = {};
+    final List<String> serialNumbers = [];
 
     // First, handle comma-separated serial numbers explicitly
     // Pattern: V0QSN0,VTV0QSN8,VTV0QSN9,VTV0QSND
@@ -77,7 +77,7 @@ class SerialNumberExtractor {
         for (final part in parts) {
           final cleaned = _cleanSerialNumber(part.trim());
           if (cleaned.length >= 6 && !_isFalsePositive(cleaned)) {
-            serialNumbers.add(cleaned);
+            serialNumbers.add(cleaned); // Keep duplicates
           }
         }
       }
@@ -97,15 +97,14 @@ class SerialNumberExtractor {
           final cleaned = _cleanSerialNumber(serialNumber);
           // Filter out very short matches and common false positives
           if (cleaned.length >= 6 && !_isFalsePositive(cleaned)) {
-            serialNumbers.add(cleaned);
+            serialNumbers.add(cleaned); // Keep duplicates
           }
         }
       }
     }
 
-    // Sort and return
-    final sorted = serialNumbers.toList()..sort();
-    return sorted;
+    // Return all serial numbers (including duplicates), sorted for consistency
+    return serialNumbers..sort();
   }
 
   /// Checks if a potential serial number is likely a false positive
@@ -131,11 +130,14 @@ class SerialNumberExtractor {
     // Remove leading/trailing whitespace
     var cleaned = serialNumber.trim();
 
-    // Replace common OCR mistakes (O->0, I->1, l->1, etc.)
-    cleaned = cleaned.replaceAll(RegExp(r'[O]'), '0');
-    cleaned = cleaned.replaceAll(RegExp(r'[Il]'), '1');
-    cleaned = cleaned.replaceAll(RegExp(r'[S]'), '5');
-
+    // Replace common OCR mistakes where characters are misread as similar-looking characters
+    // Note: We only replace when OCR commonly misreads (e.g., 0->O, 1->I), not the reverse
+    // DO NOT replace S->5 as S is a valid character and OCR may correctly read it as S
+    // Only replace ambiguous characters that are commonly confused:
+    // - O (letter) is often misread as 0 (zero) - but we keep O as it might be correct
+    // - I (letter) and l (lowercase L) are often misread as 1 (one)
+    // We're more conservative: only fix obvious OCR errors, not all potential ambiguities
+    
     // Remove invalid characters that might be OCR errors
     cleaned = cleaned.replaceAll(RegExp(r'[^A-Z0-9\-]'), '');
 

@@ -202,7 +202,7 @@ class DesktopOCR implements OCRPlatformInterface {
       final outputFile = File('${tempDir.path}/tesseract_output_${DateTime.now().millisecondsSinceEpoch}');
       final outputPath = outputFile.path;
 
-      // Run tesseract OCR
+      // Run tesseract OCR with improved settings for better accuracy
       // tesseract input.png output -l eng
       final tesseractCmd = _tesseractPath ?? 'tesseract';
       final result = await Process.run(
@@ -212,6 +212,8 @@ class DesktopOCR implements OCRPlatformInterface {
           outputPath,
           '-l', 'eng', // English language
           '--psm', '6', // Assume a single uniform block of text
+          '--oem', '3', // Use default OCR Engine Mode (LSTM neural nets)
+          '-c', 'tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-', // Whitelist alphanumeric and dash
         ],
         runInShell: true,
         environment: {
