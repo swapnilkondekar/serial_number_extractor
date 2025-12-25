@@ -54,3 +54,5 @@ OCRPlatformInterface createMobileOCRImpl() => MobileOCR();
 
 
 
+
+
