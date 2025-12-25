@@ -18,3 +18,5 @@ abstract class OCRPlatformInterface {
 
 
 
+
+

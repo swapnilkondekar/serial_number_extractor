@@ -204,6 +204,8 @@ class DesktopOCR implements OCRPlatformInterface {
 
       // Run tesseract OCR with improved settings for better accuracy
       // tesseract input.png output -l eng
+      // Note: We don't use char_whitelist as it can interfere with OCR accuracy
+      // Instead, we'll clean up the output in post-processing
       final tesseractCmd = _tesseractPath ?? 'tesseract';
       final result = await Process.run(
         tesseractCmd,
@@ -213,7 +215,6 @@ class DesktopOCR implements OCRPlatformInterface {
           '-l', 'eng', // English language
           '--psm', '6', // Assume a single uniform block of text
           '--oem', '3', // Use default OCR Engine Mode (LSTM neural nets)
-          '-c', 'tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-', // Whitelist alphanumeric and dash
         ],
         runInShell: true,
         environment: {
